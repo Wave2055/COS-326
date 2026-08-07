@@ -28,4 +28,41 @@ public class Researcher {
         this.email = email;
         this.fullName = fullName;
     }
+
+        public String getResearcherId() {
+        return researcherId;
+    }
+
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public String getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(String department) {
+        this.department = department;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public List<Booking> getBookings() {
+        return this.bookings;
+    }
+
+    @Override
+    public String toString() {
+        return "Researcher{" + researcherId + ", " + fullName + ", " + department + "}";
+    }
 }
