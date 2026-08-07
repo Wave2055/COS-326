@@ -1,0 +1,29 @@
+# --- Build output ---
+target/
+build/
+out/
+bin/
+*.class
+
+# --- ObjectDB ---
+*.odb
+*.odb$
+*.tmp$objectdb
+
+# --- Maven ---
+.mvn/wrapper/maven-wrapper.jar
+
+# --- VS Code ---
+.vscode/
+!.vscode/launch.json
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+
+# --- Logs ---
+*.log
+
+# --- Packaged submission zips ---
+u*_*.zip
+*/.vscode/settings.json
