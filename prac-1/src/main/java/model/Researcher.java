@@ -65,4 +65,15 @@ public class Researcher {
     public String toString() {
         return "Researcher{" + researcherId + ", " + fullName + ", " + department + "}";
     }
+
+    @Override
+    public boolean equals (Object o){
+        if (this == o) return true; // same address
+
+        if (!(o instanceof Researcher)) return false; //if not researcher not same
+
+        Researcher other = (Researcher) o;// can only be researcher when we get here
+
+        return Objects.equals(researcherId, other.researcherId);// if same researcher id
+    }
 }
