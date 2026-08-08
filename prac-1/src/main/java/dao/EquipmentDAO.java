@@ -62,16 +62,22 @@ public class EquipmentDAO {
     /** Spec (c)(viii): total replacement cost of all equipment currently stored. */
     public double getTotalReplacementCost() {
         TypedQuery<Double> query = em.createQuery(
-                "SELECT COALESCE(SUM(e.replacementCost), 0) FROM Equipment e", Double.class);
-        return query.getSingleResult();
+                "SELECT SUM(e.replacementCost) FROM Equipment e", Double.class);
+        Double total = query.getSingleResult();
+        return total != null ? total : 0.0;
     }
 
     /** Spec (d)(3): equipment that has never been booked. */
     public List<Equipment> findNeverBooked() {
-        TypedQuery<Equipment> query = em.createQuery(
-                "SELECT e FROM Equipment e WHERE e.bookings IS EMPTY ORDER BY e.equipmentName",
-                Equipment.class);
-        return query.getResultList();
+        // ObjectDB's JPQL doesn't accept "IS EMPTY" on this mapped-by collection,
+        // so find equipment that HAS bookings and subtract it in Java instead.
+        TypedQuery<Equipment> bookedQuery = em.createQuery(
+                "SELECT DISTINCT b.equipment FROM Booking b", Equipment.class);
+        List<Equipment> bookedEquipment = bookedQuery.getResultList();
+
+        List<Equipment> neverBooked = findAll();
+        neverBooked.removeAll(bookedEquipment);
+        return neverBooked;
     }
 
     public Equipment update(Equipment equipment) {
