@@ -1,6 +1,6 @@
 package model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -9,6 +9,7 @@ import java.util.Objects;
 public class Researcher {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String researcherId;
 
     private String fullName;
@@ -22,8 +23,7 @@ public class Researcher {
 
     }
 
-    public Researcher(String researcherId, String fullName, String department, String email){
-        this.researcherId = researcherId;
+    public Researcher(String fullName, String department, String email){
         this.department = department;
         this.email = email;
         this.fullName = fullName;

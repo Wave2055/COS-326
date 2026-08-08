@@ -1,6 +1,6 @@
 package model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Objects;
@@ -9,6 +9,7 @@ import java.util.Objects;
 public class Booking {
     
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String bookingId;
 
     private LocalDate bookingDate;
@@ -41,7 +42,6 @@ public class Booking {
         Researcher researcher, 
         Equipment equipment){
     
-        this.bookingId = bookingId;
         this.bookingDate = bookingDate;
         this.startTime = startTime;
         this.endTime = endTime;

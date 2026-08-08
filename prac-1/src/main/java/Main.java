@@ -1,6 +1,8 @@
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.EntityManager;
 import model.Researcher;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,53 +16,46 @@ public class Main {
         overrides.put("jakarta.persistence.jdbc.url", dbPath);
 
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("practical1PU", overrides);
+        
+        testPersistRetrieve(emf);
+
+        emf.close();
+
+        System.out.println("Opening database: " + dbPath);
     
     }
 
-private static void testModels(EntityManagerFactory emf) {
+    private static void testPersistRetrieve(EntityManagerFactory emf) {
+    System.out.println("=== PERSIST / RETRIEVE TEST ===\n");
 
-    // ----- 1. Inspect the Metamodel (prints all entities and their fields) -----
-    System.out.println("=== Metamodel inspection ===");
-    var metamodel = emf.getMetamodel();
-    for (var entity : metamodel.getEntities()) {
-        System.out.println("Entity: " + entity.getName());
-        for (var attr : entity.getAttributes()) {
-            System.out.println("  - " + attr.getName() + " : " 
-                + attr.getJavaType().getSimpleName()
-                + " (PersistentType: " + attr.getPersistentAttributeType() + ")");
-        }
-    }
-
-    // ----- 2. Perform a simple persist-and-retrieve test -----
-    // This validates that the database can actually store and load objects.
-    var em = emf.createEntityManager();
+    EntityManager em = emf.createEntityManager();
     try {
+        // ---- Persist ----
         em.getTransaction().begin();
 
-        // Create a sample Researcher
         Researcher researcher = new Researcher();
         researcher.setFullName("Dr. Alice");
+        researcher.setDepartment("Computer Science");
+        researcher.setEmail("alice@up.ac.za");
         em.persist(researcher);
 
-        // Flush to force writing to disk (ObjectDB will generate the schema now)
-        em.flush();
-
         em.getTransaction().commit();
-    } catch (Exception e) {
-        em.getTransaction().rollback();
-        throw e;
-    } finally {
-        em.close();
-    }
 
-    // Now read it back
-    em = emf.createEntityManager();
-    try {
-        var found = em.createQuery("SELECT r FROM Researcher r WHERE r.name = 'Dr. Alice'", Researcher.class)
+        // ---- Retrieve ----
+        em.clear(); // clear persistence context to force a fresh read
+
+        var found = em.createQuery("SELECT r FROM Researcher r WHERE r.fullName = 'Dr. Alice'", Researcher.class)
                       .getSingleResult();
-        System.out.println("\n=== Retrieve test ===");
-        System.out.println("Found researcher: " + found.getFullName());
-        System.out.println("ID: " + found.getResearcherId()); // if you have an @Id field
+
+        System.out.println("Retrieved researcher:");
+        System.out.println("  ID: " + found.getResearcherId());
+        System.out.println("  Full Name: " + found.getFullName());
+        System.out.println("  Department: " + found.getDepartment());
+        System.out.println("  Email: " + found.getEmail());
+
+    } catch (Exception e) {
+        System.err.println("Test failed: " + e.getMessage());
+        e.printStackTrace();
     } finally {
         em.close();
     }

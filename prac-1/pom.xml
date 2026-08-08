@@ -25,21 +25,15 @@
     <dependencies>
         <dependency>
             <groupId>com.objectdb</groupId>
-            <artifactId>objectdb-jk</artifactId>
+            <artifactId>objectdb</artifactId>
             <version>2.9.5</version>
         </dependency>
 
         <dependency>
-            <groupId>com.objectdb</groupId>
-            <artifactId>objectdb-jk</artifactId>
-            <version>2.9.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.persistence</groupId>
-            <artifactId>jakarta.persistence-api</artifactId>
-            <version>3.2.0</version>
-        </dependency>
+        <groupId>javax.persistence</groupId>
+        <artifactId>javax.persistence-api</artifactId>
+        <version>2.2</version>
+    </dependency>
 
     </dependencies>
 

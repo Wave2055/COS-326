@@ -1,7 +1,7 @@
 package model;
 
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,7 @@ import java.util.Objects;
 public class Equipment {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private String equipmentId;
 
     private String equipmentName;
@@ -28,9 +29,8 @@ public class Equipment {
 
     }
 
-    public Equipment(String equipmentId, String equipmentName, String equipmentCategory,
+    public Equipment(String equipmentName, String equipmentCategory,
                       LocalDate purchaseDate, double replacementCost, EquipmentStatus status) {
-        this.equipmentId = equipmentId;
         this.equipmentName = equipmentName;
         this.equipmentCategory = equipmentCategory;
         this.purchaseDate = purchaseDate;
