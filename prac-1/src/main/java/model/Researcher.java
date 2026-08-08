@@ -10,7 +10,7 @@ public class Researcher {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String researcherId;
+    private long researcherId;
 
     private String fullName;
     private String department;
@@ -29,7 +29,7 @@ public class Researcher {
         this.fullName = fullName;
     }
 
-        public String getResearcherId() {
+    public long getResearcherId() {
         return researcherId;
     }
 

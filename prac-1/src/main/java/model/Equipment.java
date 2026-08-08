@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-
+@Entity
 public class Equipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String equipmentId;
+    private long equipmentId;
 
     private String equipmentName;
     private String equipmentCategory;
@@ -38,7 +38,7 @@ public class Equipment {
         this.status = status;
     }
 
-    public String getEquipmentId() {
+    public long getEquipmentId() {
         return equipmentId;
     }
 

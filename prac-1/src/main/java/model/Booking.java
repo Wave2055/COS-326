@@ -10,7 +10,7 @@ public class Booking {
     
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private String bookingId;
+    private long bookingId;
 
     private LocalDate bookingDate;
     private LocalTime startTime;
@@ -24,7 +24,7 @@ public class Booking {
     @JoinColumn(name = "researcherId")
     private Researcher researcher;
 
-    @ManyToMany
+    @ManyToOne
     @JoinColumn(name = "equipment_id")
     private Equipment equipment;
 
@@ -33,7 +33,6 @@ public class Booking {
     }
 
     public Booking(
-        String bookingId, 
         LocalDate bookingDate, 
         LocalTime startTime, 
         LocalTime endTime,
@@ -51,7 +50,7 @@ public class Booking {
         this.equipment = equipment;
     }
 
-        public String getBookingId() {
+    public long getBookingId() {
         return bookingId;
     }
 
