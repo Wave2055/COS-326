@@ -82,6 +82,11 @@ public class Equipment {
         this.status = status;
     }
 
+    public List<Booking> getBookings()
+    {
+        return bookings;
+    }
+
     @Override
     public boolean equals (Object o){
         if (this == o) return true; // same address
