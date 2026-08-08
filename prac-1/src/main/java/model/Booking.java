@@ -27,11 +27,11 @@ public class Booking {
     @JoinColumn(name = "equipment_id")
     private Equipment equipment;
 
-    protected Booking(){
+    public Booking(){
 
     }
 
-    protected Booking(
+    public Booking(
         String bookingId, 
         LocalDate bookingDate, 
         LocalTime startTime, 
@@ -115,11 +115,11 @@ public class Booking {
     public boolean equals (Object o){
         if (this == o) return true; // same address
 
-        if (!(o instanceof Booking)) return false; //if not researcher not same
+        if (!(o instanceof Booking)) return false; //if not Booking not same
 
-        Booking other = (Booking) o;// can only be researcher when we get here
+        Booking other = (Booking) o;// can only be Booking when we get here
 
-        return Objects.equals(bookingId, other.bookingId);// if same researcher id
+        return Objects.equals(bookingId, other.bookingId);// if same  id
     }
 
     @Override

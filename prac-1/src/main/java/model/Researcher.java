@@ -18,7 +18,7 @@ public class Researcher {
     @OneToMany(mappedBy = "researcher", cascade = CascadeType.PERSIST, orphanRemoval = false)
     private List<Booking> bookings = new ArrayList<>();
 
-    protected Researcher() {
+    public Researcher() {
 
     }
 
