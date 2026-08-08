@@ -1,5 +1,6 @@
 package dao;
 
+import model.Equipment;
 import model.Researcher;
 
 import javax.persistence.*;
@@ -63,6 +64,13 @@ public class ResearcherDAO{
         );
         query.setParameter("nameSegment","%"+ nameSegment +"%");
 
+        return query.getResultList();
+    }
+
+    public List<Researcher> findAll()
+    {
+        TypedQuery<Researcher> query = em.createQuery(
+                "SELECT r FROM Researcher r ORDER BY r.fullName", Researcher.class);
         return query.getResultList();
     }
 

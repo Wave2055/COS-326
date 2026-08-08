@@ -3,39 +3,35 @@ package dao;
 import model.Equipment;
 import model.EquipmentStatus;
 
-import javax.persistence.*;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
+import javax.persistence.TypedQuery;
 import java.util.List;
 
 public class EquipmentDAO {
+
     private final EntityManager em = JPAUtil.geEntityManager();
 
-    public Equipment create(Equipment equipment)
-    {
+    public Equipment create(Equipment equipment) {
         EntityTransaction tx = em.getTransaction();
-
-        try{
+        try {
             tx.begin();
             em.persist(equipment);
             tx.commit();
             return equipment;
-        }
-        catch(RuntimeException e)
-        {
+        } catch (RuntimeException e) {
             if (tx.isActive()) tx.rollback();
             throw e;
         }
     }
 
-    public Equipment findById(long equipmentId){
+    public Equipment findById(long equipmentId) {
         return em.find(Equipment.class, equipmentId);
     }
 
-    public List<Equipment> findAll(){
+    public List<Equipment> findAll() {
         TypedQuery<Equipment> query = em.createQuery(
-            "SELECT e FROM Equipment e ORDER BY e.equipmentName",
-            Equipment.class
-        );
-
+                "SELECT e FROM Equipment e ORDER BY e.equipmentName", Equipment.class);
         return query.getResultList();
     }
 
@@ -46,7 +42,7 @@ public class EquipmentDAO {
         query.setParameter("status", status);
         return query.getResultList();
     }
- 
+
     public List<Equipment> findByCategory(String category) {
         TypedQuery<Equipment> query = em.createQuery(
                 "SELECT e FROM Equipment e WHERE e.equipmentCategory = :category ORDER BY e.equipmentName",
@@ -54,12 +50,27 @@ public class EquipmentDAO {
         query.setParameter("category", category);
         return query.getResultList();
     }
- 
+
     public List<Equipment> searchByName(String namePart) {
         TypedQuery<Equipment> query = em.createQuery(
                 "SELECT e FROM Equipment e WHERE LOWER(e.equipmentName) LIKE LOWER(:namePart) ORDER BY e.equipmentName",
                 Equipment.class);
         query.setParameter("namePart", "%" + namePart + "%");
+        return query.getResultList();
+    }
+
+    /** Spec (c)(viii): total replacement cost of all equipment currently stored. */
+    public double getTotalReplacementCost() {
+        TypedQuery<Double> query = em.createQuery(
+                "SELECT COALESCE(SUM(e.replacementCost), 0) FROM Equipment e", Double.class);
+        return query.getSingleResult();
+    }
+
+    /** Spec (d)(3): equipment that has never been booked. */
+    public List<Equipment> findNeverBooked() {
+        TypedQuery<Equipment> query = em.createQuery(
+                "SELECT e FROM Equipment e WHERE e.bookings IS EMPTY ORDER BY e.equipmentName",
+                Equipment.class);
         return query.getResultList();
     }
 
@@ -100,6 +111,4 @@ public class EquipmentDAO {
             throw e;
         }
     }
-
-    
 }
