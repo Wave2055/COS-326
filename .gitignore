@@ -27,3 +27,6 @@ Thumbs.db
 # --- Packaged submission zips ---
 u*_*.zip
 */.vscode/settings.json
+prac-1/dependency-reduced-pom.xml
+
+*.zip
