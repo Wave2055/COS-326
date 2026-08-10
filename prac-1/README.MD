@@ -85,14 +85,6 @@ Run the application (launches the Swing UI):
 mvn exec:java -Dexec.mainClass="Main"
 ```
 
-Run the standalone persistence smoke test (optional — sanity-checks the
-ObjectDB connection by persisting and retrieving a sample Researcher,
-Equipment, and Booking):
-
-```bash
-mvn exec:java -Dexec.mainClass="PersistenceSmokeTest"
-```
-
 > If `mvn exec:java` isn't recognised, make sure the `exec-maven-plugin` is
 > configured in `pom.xml`:
 >
@@ -119,7 +111,7 @@ mvn exec:java -Dexec.mainClass="PersistenceSmokeTest"
 
 ```bash
 mvn clean package
-java -jar target/practical1-<version>.jar
+java -jar target/u23621372-Moodally-J.jar
 ```
 
 (Adjust the jar name to whatever your `pom.xml` produces, and make sure it's

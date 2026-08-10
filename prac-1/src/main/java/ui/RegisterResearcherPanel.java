@@ -30,7 +30,7 @@ public class RegisterResearcherPanel extends JPanel {
 
         JButton saveButton = new JButton("Register Researcher");
         saveButton.addActionListener(e -> save());
-        getRootPane();
+
         JPanel buttonRow = new JPanel(new FlowLayout(FlowLayout.LEFT));
         buttonRow.add(saveButton);
 
@@ -42,14 +42,26 @@ public class RegisterResearcherPanel extends JPanel {
 
     private void save() {
         try {
-            String fullName = fullNameField.getText();
-            String department = departmentField.getText();
-            String email = emailField.getText();
+            String fullName = fullNameField.getText().trim();
+            String department = departmentField.getText().trim();
+            String email = emailField.getText().trim();
+
+            // Basic non‑empty checks
             UiUtils.requireNonEmpty(fullName, "Full Name");
             UiUtils.requireNonEmpty(department, "Department");
             UiUtils.requireNonEmpty(email, "Email Address");
 
-            Researcher researcher = new Researcher(fullName.trim(), department.trim(), email.trim());
+            // Validate name format (only letters, spaces, hyphens, apostrophes)
+            if (!fullName.matches("^[A-Za-z\\s\\-']+$")) {
+                throw new IllegalArgumentException("Full Name may only contain letters, spaces, hyphens, and apostrophes.");
+            }
+
+            // Validate email format
+            if (!isValidEmail(email)) {
+                throw new IllegalArgumentException("Please enter a valid email address.");
+            }
+
+            Researcher researcher = new Researcher(fullName, department, email);
             Researcher saved = researcherDao.create(researcher);
 
             UiUtils.showInfo(this, "Researcher registered with ID " + saved.getResearcherId());
@@ -59,6 +71,12 @@ public class RegisterResearcherPanel extends JPanel {
         } catch (RuntimeException ex) {
             UiUtils.showError(this, "Could not register researcher: " + ex.getMessage());
         }
+    }
+
+
+    private boolean isValidEmail(String email) {
+        String emailRegex = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$";
+        return email.matches(emailRegex);
     }
 
     private void clearForm() {
