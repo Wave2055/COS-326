@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>cos326</groupId>
-    <artifactId>practical1</artifactId>
+    <artifactId>u23621372-Moodally-J</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
@@ -38,7 +38,7 @@
     </dependencies>
 
     <build>
-        <finalName>practical1</finalName>
+        <finalName>u23621372-Moodally-J</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
