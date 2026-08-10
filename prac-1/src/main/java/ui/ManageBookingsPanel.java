@@ -7,7 +7,6 @@ import model.BookingStatus;
 import javax.swing.*;
 import java.awt.*;
 
-/** Implements spec (c)(vi) Update Booking and (c)(vii) Cancel Booking. */
 public class ManageBookingsPanel extends JPanel {
 
     private final BookingDAO bookingDao = new BookingDAO();

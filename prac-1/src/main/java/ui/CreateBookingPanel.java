@@ -12,8 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.time.LocalDate;
 
-/** Implements spec (c)(iii) Create Booking. Bookings may only reference existing records,
- *  so researcher/equipment are picked from dropdowns rather than typed IDs. */
+
 public class CreateBookingPanel extends JPanel {
 
     private final BookingDAO bookingDao = new BookingDAO();
@@ -62,7 +61,6 @@ public class CreateBookingPanel extends JPanel {
         refresh();
     }
 
-    /** Reloads researcher/equipment dropdowns — call before showing this panel. */
     public void refresh() {
         Researcher selectedResearcher = (Researcher) researcherCombo.getSelectedItem();
         Equipment selectedEquipment = (Equipment) equipmentCombo.getSelectedItem();

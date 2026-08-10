@@ -11,7 +11,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/** Covers spec (c)(viii) Equipment Summary and (d) Additional Functionality. */
 public class ReportsPanel extends JPanel {
 
     private final EquipmentDAO equipmentDao = new EquipmentDAO();

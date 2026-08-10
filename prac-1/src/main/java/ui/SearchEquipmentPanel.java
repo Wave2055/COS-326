@@ -7,7 +7,6 @@ import model.Equipment;
 import javax.swing.*;
 import java.awt.*;
 
-/** Implements spec (c)(v) Search Equipment: find by ID, show equipment + its booking history. */
 public class SearchEquipmentPanel extends JPanel {
 
     private final EquipmentDAO equipmentDao = new EquipmentDAO();

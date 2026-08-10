@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 
-/** Small shared helpers so form panels don't repeat layout/validation boilerplate. */
 public final class UiUtils {
 
     public static final Font LABEL_FONT = new Font("SansSerif", Font.PLAIN, 13);

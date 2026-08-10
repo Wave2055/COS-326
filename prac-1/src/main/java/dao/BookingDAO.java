@@ -19,7 +19,6 @@ public class BookingDAO {
 
     private final EntityManager em = JPAUtil.geEntityManager();
 
-    /** Registers a new booking after enforcing all business rules. */
     public Booking create(Booking booking) {
         validate(booking, null);
         EntityTransaction tx = em.getTransaction();
@@ -68,12 +67,6 @@ public class BookingDAO {
         return query.getResultList();
     }
 
-    /**
-     * Updates a booking. The spec only requires status changes here, so
-     * date/time/equipment/researcher-dependent rules are re-checked against
-     * whatever the booking object currently holds (in case a caller does
-     * change more than status), excluding the booking's own row.
-     */
     public Booking update(Booking booking) {
         validate(booking, booking.getBookingId());
         EntityTransaction tx = em.getTransaction();
@@ -88,7 +81,6 @@ public class BookingDAO {
         }
     }
 
-    /** Cancels (removes) a booking. Never touches the researcher/equipment rows. */
     public boolean delete(long bookingId) {
         EntityTransaction tx = em.getTransaction();
         try {
@@ -107,7 +99,6 @@ public class BookingDAO {
         }
     }
 
-    /** Researcher(s) with the highest number of bookings (ties included). */
     public List<Researcher> findResearchersWithMostBookings() {
         TypedQuery<Object[]> countQuery = em.createQuery(
                 "SELECT b.researcher, COUNT(b) FROM Booking b GROUP BY b.researcher", Object[].class);
@@ -126,7 +117,7 @@ public class BookingDAO {
         return topResearchers;
     }
 
-    // ---- Business rule validation (spec section e) ----
+    // ---- Business rule validation ----
 
     private void validate(Booking booking, Long excludeBookingId) {
         Equipment equipment = booking.getEquipment();
@@ -141,19 +132,19 @@ public class BookingDAO {
         if (date == null || start == null || end == null) {
             throw new IllegalArgumentException("A booking must have a date, start time and end time");
         }
-        // Rule 2: valid start/end time
+        // valid start/end time
         if (!start.isBefore(end)) {
             throw new IllegalArgumentException("Start time must be before end time");
         }
-        // Rule 9: today or future date only
+        // today or future date only
         if (date.isBefore(LocalDate.now())) {
             throw new IllegalArgumentException("Bookings may only be created for the current date or a future date");
         }
-        // Rule 1: equipment must not be out of service
+        // equipment must not be out of service
         if (equipment.getStatus() == EquipmentStatus.OUT_OF_SERVICE) {
             throw new IllegalStateException("Equipment marked as Out of Service may not be booked");
         }
-        // Rule 3: max 3 active bookings per researcher
+        // max 3 active bookings per researcher
         if (booking.getStatus() == BookingStatus.ACTIVE) {
             long activeCount = countActiveBookings(researcher, excludeBookingId);
             if (activeCount >= MAX_ACTIVE_BOOKINGS_PER_RESEARCHER) {
@@ -163,11 +154,11 @@ public class BookingDAO {
                                 + " active bookings");
             }
         }
-        // Rule 7: no conflicting (overlapping) bookings for the same equipment
+        // no conflicting (overlapping) bookings for the same equipment
         if (hasOverlap(equipment, date, start, end, excludeBookingId)) {
             throw new IllegalStateException("Equipment is already booked for an overlapping time slot on this date");
         }
-        // Rule 8: researcher may not book the same equipment twice on the same date
+        // researcher may not book the same equipment twice on the same date
         if (hasSameResearcherEquipmentDate(researcher, equipment, date, excludeBookingId)) {
             throw new IllegalStateException(
                     "This researcher already has a booking for this equipment on this date");

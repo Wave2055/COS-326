@@ -7,7 +7,6 @@ import model.Researcher;
 import javax.swing.*;
 import java.awt.*;
 
-/** Implements spec (c)(iv) Search Researcher: find by ID, show researcher + their bookings. */
 public class SearchResearcherPanel extends JPanel {
 
     private final ResearcherDAO researcherDao = new ResearcherDAO();
