@@ -1,0 +1,164 @@
+=========================================================================
+COS326 - Database Systems - Practical 3 2026
+Student: Moodally J (u23621372)
+=========================================================================
+
+
+-------------------------------------------------------------------------
+TASK 1: XPath Investigation [5 Marks]
+Names of all animals older than 10 years whose conservation status is not
+"Least Concern".
+-------------------------------------------------------------------------
+
+doc("wildlife.xml")/wildlife/animal[age > 10][status != "Least Concern"]/name
+
+
+-------------------------------------------------------------------------
+TASK 2: Cross-Document Analysis [8 Marks]
+Animals observed in a reserve other than their registered home reserve.
+-------------------------------------------------------------------------
+
+for $animal in doc("wildlife.xml")/wildlife/animal
+let $home := $animal/home_reserve/text()
+let $visited := distinct-values(
+        doc("observations.xml")/observations/observation
+            [animal_id = $animal/animal_id]/reserve )
+for $reserve in $visited
+where $reserve != $home
+order by $animal/name, $reserve
+return
+    <movement>
+        <animal>{ $animal/name/text() }</animal>
+        <homeReserve>{ $home }</homeReserve>
+        <observedReserve>{ $reserve }</observedReserve>
+    </movement>
+
+
+-------------------------------------------------------------------------
+TASK 3: Reserve Aggregation Analysis [8 Marks]
+Total individuals recorded per reserve, keeping only reserves whose total
+exceeds the average total across all reserves. The average is computed over
+the per-reserve totals (not over individual observations), then used as the
+filter value in the where clause.
+-------------------------------------------------------------------------
+
+let $observations := doc("observations.xml")/observations/observation
+let $reserves     := distinct-values($observations/reserve)
+let $averageTotal := avg(
+        for $r in $reserves
+        return sum($observations[reserve = $r]/individuals) )
+for $reserve in $reserves
+let $total := sum($observations[reserve = $reserve]/individuals)
+where $total > $averageTotal
+order by $total descending
+return
+    <reserveSummary>
+        <reserve>{ $reserve }</reserve>
+        <totalObserved>{ $total }</totalObserved>
+    </reserveSummary>
+
+
+-------------------------------------------------------------------------
+TASK 4: Species-Level Analysis [9 Marks]
+Observation count and average group size per species, for species with at
+least two observations. Species is held in wildlife.xml and observations in
+observations.xml, so the animal_id values of every animal of a species are
+used to select that species' observations. format-number() fixes the average
+at two decimal places.
+-------------------------------------------------------------------------
+
+let $animals      := doc("wildlife.xml")/wildlife/animal
+let $observations := doc("observations.xml")/observations/observation
+for $species in distinct-values($animals/species)
+let $ids        := $animals[species = $species]/animal_id
+let $speciesObs := $observations[animal_id = $ids]
+let $total      := count($speciesObs)
+where $total >= 2
+let $average    := avg($speciesObs/individuals)
+order by $average descending
+return
+    <speciesAnalysis>
+        <species>{ $species }</species>
+        <observations>{ $total }</observations>
+        <averageGroupSize>{ format-number($average, "0.00") }</averageGroupSize>
+    </speciesAnalysis>
+
+
+-------------------------------------------------------------------------
+TASK 5: Most Frequently Observed Animal [7 Marks]
+The animal(s) with the highest observation count. The maximum is computed
+first over every animal's count, then animals are filtered against that
+maximum, so any number of tied animals is returned rather than just one.
+-------------------------------------------------------------------------
+
+let $animals      := doc("wildlife.xml")/wildlife/animal
+let $observations := doc("observations.xml")/observations/observation
+let $counts       := for $a in $animals
+                     return count($observations[animal_id = $a/animal_id])
+let $maximum      := max($counts)
+for $animal in $animals
+let $total := count($observations[animal_id = $animal/animal_id])
+where $total = $maximum
+order by $animal/name
+return
+    <mostObserved>
+        <animal>{ $animal/name/text() }</animal>
+        <observationCount>{ $total }</observationCount>
+    </mostObserved>
+
+
+-------------------------------------------------------------------------
+TASK 6: Conservation Risk Report [7 Marks]
+Vulnerable or Endangered animals that are monitored less than average.
+$averageObs is the mean number of observations per monitored animal (an
+animal appearing at least once in observations.xml), which each animal's own
+count is then compared against.
+-------------------------------------------------------------------------
+
+let $animals      := doc("wildlife.xml")/wildlife/animal
+let $observations := doc("observations.xml")/observations/observation
+let $monitored    := $animals[animal_id = $observations/animal_id]
+let $averageObs   := avg(
+        for $a in $monitored
+        return count($observations[animal_id = $a/animal_id]) )
+for $animal in $animals
+let $total := count($observations[animal_id = $animal/animal_id])
+where ($animal/status = "Vulnerable" or $animal/status = "Endangered")
+      and $total < $averageObs
+order by $animal/status, $animal/name
+return
+    <monitoringAlert>
+        <animal>{ $animal/name/text() }</animal>
+        <status>{ $animal/status/text() }</status>
+        <observationCount>{ $total }</observationCount>
+    </monitoringAlert>
+
+
+-------------------------------------------------------------------------
+TASK 7: Animal Range Analysis [6 Marks]
+Animals observed in more than one distinct reserve, with the reserve(s) in
+which each was seen most often. The inner FLWOR re-counts the observations
+per reserve and keeps every reserve matching the maximum, so tied reserves
+are all reported.
+-------------------------------------------------------------------------
+
+let $observations := doc("observations.xml")/observations/observation
+for $animal in doc("wildlife.xml")/wildlife/animal
+let $animalObs := $observations[animal_id = $animal/animal_id]
+let $reserves  := distinct-values($animalObs/reserve)
+where count($reserves) > 1
+let $maximum := max( for $r in $reserves
+                     return count($animalObs[reserve = $r]) )
+order by $animal/name
+return
+    <rangeAnalysis>
+        <animal>{ $animal/name/text() }</animal>
+        <homeReserve>{ $animal/home_reserve/text() }</homeReserve>
+        <reserveCount>{ count($reserves) }</reserveCount>
+        <mostFrequentReserves>{
+            for $r in $reserves
+            where count($animalObs[reserve = $r]) = $maximum
+            order by $r
+            return <reserve>{ $r }</reserve>
+        }</mostFrequentReserves>
+    </rangeAnalysis>
