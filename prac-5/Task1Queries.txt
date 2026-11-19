@@ -1,0 +1,229 @@
+// COS326 - Database Systems - Practical 5 2026
+// u23621372 - Moodally J
+// All Cypher queries for Tasks 1 - 3.
+
+// =====================================================================
+// TASK 1: IMPORTING DATA AND CREATING THE GRAPH
+// =====================================================================
+
+// ---------------------------------------------------------------------
+// Question 1.1 - Database preparation and data import
+// ---------------------------------------------------------------------
+
+// Run against the system database:
+CREATE DATABASE COS326Prac5 IF NOT EXISTS;
+
+// Everything below runs against COS326Prac5.
+
+// The unique constraint stops a re-run from duplicating people, and the name
+// index makes the 4970 MATCH lookups in (b) fast instead of a full scan each.
+CREATE CONSTRAINT person_id IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE;
+CREATE INDEX person_name IF NOT EXISTS FOR (p:Person) ON (p.name);
+
+// 1.1a - Person nodes from persons.csv.
+// The ID column is text in the CSV, so toInteger() stores it as an integer.
+LOAD CSV WITH HEADERS FROM 'file:///persons.csv' AS row
+CREATE (p:Person {id: toInteger(row.ID), name: row.name});
+
+// 1.1b - FOLLOWS relationships from follows.csv.
+// Both endpoints are matched by name; a row whose account is not in
+// persons.csv creates no relationship.
+LOAD CSV WITH HEADERS FROM 'file:///follows.csv' AS row
+MATCH (a:Person {name: row.person})
+MATCH (b:Person {name: row.follows})
+CREATE (a)-[:FOLLOWS]->(b);
+
+// ---------------------------------------------------------------------
+// Question 1.2 - Verify the graph
+// ---------------------------------------------------------------------
+
+// 1.2a - total Person nodes and total FOLLOWS relationships.
+MATCH (p:Person)
+WITH count(p) AS people
+MATCH ()-[f:FOLLOWS]->()
+RETURN people, count(f) AS follows;
+
+// 1.2b - a sample of five people and their outgoing FOLLOWS relationships.
+MATCH (p:Person)-[:FOLLOWS]->(followed:Person)
+RETURN p.name AS person, collect(followed.name) AS follows
+LIMIT 5;
+
+
+// =====================================================================
+// TASK 2: CYPHER QUERIES AND GRAPH OPERATIONS
+// =====================================================================
+
+// Parameters used by Task 2. In Neo4j Browser or cypher-shell, set the
+// account first; the investigator changes only this line.
+:param account => '@mileycyrus';
+
+// ---------------------------------------------------------------------
+// Question 2.1 - Basic graph queries
+// ---------------------------------------------------------------------
+
+// 2.1a - all distinct node labels in use.
+CALL db.labels() YIELD label
+RETURN label
+ORDER BY label;
+
+// 2.1b - every person in alphabetical order, first 20 only.
+MATCH (p:Person)
+RETURN p.name AS name
+ORDER BY name
+LIMIT 20;
+
+// 2.1c - all distinct relationship types in use.
+CALL db.relationshipTypes() YIELD relationshipType
+RETURN relationshipType
+ORDER BY relationshipType;
+
+// 2.1d - the people who follow $account.
+// FOLLOWS is directed, so the arrow points from the follower to the account.
+MATCH (follower:Person)-[:FOLLOWS]->(:Person {name: $account})
+RETURN follower.name AS follower
+ORDER BY follower;
+
+// ---------------------------------------------------------------------
+// Question 2.2 - Filtering and aggregation
+// ---------------------------------------------------------------------
+
+// 2.2a - the five accounts with the most incoming FOLLOWS.
+MATCH (p:Person)<-[:FOLLOWS]-(follower:Person)
+RETURN p.name AS account, count(follower) AS followerCount
+ORDER BY followerCount DESC
+LIMIT 5;
+
+// 2.2b - the number of accounts each person follows, five highest.
+// COUNT {} is used rather than a second MATCH so that the count is produced
+// for every person, including those who follow nobody.
+MATCH (p:Person)
+RETURN p.name AS account, COUNT { (p)-[:FOLLOWS]->(:Person) } AS followingCount
+ORDER BY followingCount DESC
+LIMIT 5;
+
+// ---------------------------------------------------------------------
+// Question 2.3 - Creating and querying content
+// ---------------------------------------------------------------------
+
+// 2.3a - the three Post nodes and a POSTED relationship from an existing
+// person to each. MERGE is used throughout so that running this twice does
+// not create duplicate posts or duplicate relationships.
+MATCH (author:Person {name: '@mileycyrus'})
+MERGE (p1:Post {id: 'P001'})
+  SET p1.hashtag = '#Security',  p1.message = 'Verify suspicious links'
+MERGE (p2:Post {id: 'P002'})
+  SET p2.hashtag = '#Awareness', p2.message = 'Protect your account'
+MERGE (p3:Post {id: 'P003'})
+  SET p3.hashtag = '#Updates',   p3.message = 'Review account activity'
+MERGE (author)-[:POSTED]->(p1)
+MERGE (author)-[:POSTED]->(p2)
+MERGE (author)-[:POSTED]->(p3);
+
+// 2.3b - one REPOSTED and one LIKED relationship.
+// Both people and both posts are found with MATCH first, so only the
+// relationships are created; no new Person or Post node can appear.
+MATCH (reposter:Person {name: '@tommcfly'})
+MATCH (liker:Person {name: '@ddlovato'})
+MATCH (p1:Post {id: 'P001'})
+MATCH (p2:Post {id: 'P002'})
+MERGE (reposter)-[:REPOSTED]->(p1)
+MERGE (liker)-[:LIKED]->(p2);
+
+// 2.3c - the account names, hashtags and messages of reposted posts.
+// Both the original author and the account that reposted are returned, since
+// "account names" can reasonably mean either.
+MATCH (author:Person)-[:POSTED]->(post:Post)<-[:REPOSTED]-(reposter:Person)
+RETURN author.name AS author,
+       reposter.name AS repostedBy,
+       post.hashtag AS hashtag,
+       post.message AS message
+ORDER BY post.id;
+
+
+// =====================================================================
+// TASK 3: PATH ANALYSIS AND NETWORK INVESTIGATION
+// =====================================================================
+
+// Parameters used by Task 3. The investigator edits these three lines only.
+// @_Brittany_ -> @_EmilyYoung -> @EmmsAngel is a directed two-hop chain, so
+// it demonstrates the "path found" branch of every query below.
+:param from    => '@_Brittany_';
+:param to      => '@EmmsAngel';
+:param account => '@mileycyrus';
+
+// ---------------------------------------------------------------------
+// Question 3.1 - Path queries
+// ---------------------------------------------------------------------
+
+// 3.1a - accounts reachable from $from in one or two FOLLOWS hops.
+// The relationship is traversed in its own direction, because "reachable by
+// following" means outgoing FOLLOWS. The WHERE clause drops the starting
+// account, which would otherwise come back through any two-way follow.
+// min() is used because an account reachable in both one and two hops should
+// be reported at its shortest distance.
+MATCH path = (start:Person {name: $from})-[:FOLLOWS*1..2]->(reached:Person)
+WHERE reached <> start
+RETURN reached.name AS account, min(length(path)) AS pathLength
+ORDER BY pathLength, account;
+
+// 3.1b - the nodes and relationships along a path between $from and $to.
+// OPTIONAL MATCH is what handles the "no path" case: the two accounts are
+// matched first, so one row is always produced, and path is simply null when
+// no route exists. The hop limit keeps the search bounded.
+MATCH (a:Person {name: $from}), (b:Person {name: $to})
+OPTIONAL MATCH path = (a)-[:FOLLOWS*1..4]->(b)
+WITH path
+ORDER BY length(path)
+LIMIT 1
+RETURN CASE WHEN path IS NULL THEN 'No path found' ELSE 'Path found' END AS status,
+       CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.name] END AS accounts,
+       CASE WHEN path IS NULL THEN [] ELSE [r IN relationships(path) | type(r)] END AS relationships;
+
+// 3.1c - the shortest path between $from and $to using only FOLLOWS.
+// Same OPTIONAL MATCH technique for the "no path" case. shortestPath() does
+// not need a hop limit because it stops at the first result it reaches.
+MATCH (a:Person {name: $from}), (b:Person {name: $to})
+OPTIONAL MATCH path = shortestPath((a)-[:FOLLOWS*]->(b))
+RETURN CASE WHEN path IS NULL THEN 'No path found' ELSE 'Path found' END AS status,
+       CASE WHEN path IS NULL THEN null ELSE length(path) END AS pathLength,
+       CASE WHEN path IS NULL THEN [] ELSE [n IN nodes(path) | n.name] END AS accounts;
+
+// Note on direction: the three queries above all respect the direction of
+// FOLLOWS, as the question requires. This graph is sparse (4902 relationships
+// across 8828 accounts), so most pairs have no directed route and the "no
+// path" branch is the common result - for example @mileycyrus to @ Disney.
+// Removing the arrow, shortestPath((a)-[:FOLLOWS*]-(b)), treats a follow as a
+// plain connection and finds far more paths; that undirected form is what the
+// Java application uses for Question 4.3c, where the investigator wants any
+// connection between two accounts rather than a chain of follows.
+
+// ---------------------------------------------------------------------
+// Question 3.2 - Investigation reports
+// ---------------------------------------------------------------------
+
+// 3.2a - people who have posted, and whether any of their posts was reposted.
+// collect() gathers each person's posts, then any() reduces them to the single
+// Boolean the question asks for.
+MATCH (p:Person)-[:POSTED]->(post:Post)
+WITH p, collect(post) AS posts
+RETURN p.name AS person,
+       any(post IN posts WHERE EXISTS { (post)<-[:REPOSTED]-() }) AS hasRepostedPost
+ORDER BY person;
+
+// 3.2b - total posts, reposted posts and liked posts.
+// Each post is visited exactly once and the two EXISTS subqueries ask a
+// yes/no question about it, so a post with five reposts still counts once.
+// Matching (post)<-[:REPOSTED]-() directly would return one row per repost
+// and inflate every total.
+MATCH (post:Post)
+RETURN count(post) AS totalPosts,
+       count(CASE WHEN EXISTS { (post)<-[:REPOSTED]-() } THEN post END) AS repostedPosts,
+       count(CASE WHEN EXISTS { (post)<-[:LIKED]-()    } THEN post END) AS likedPosts;
+
+// 3.2c - accounts directly connected to $account in either direction.
+// The pattern is deliberately undirected so that one match covers both cases,
+// and startNode() recovers which way the relationship actually points.
+MATCH (p:Person {name: $account})-[f:FOLLOWS]-(other:Person)
+RETURN other.name AS account,
+       CASE WHEN startNode(f) = p THEN 'outgoing' ELSE 'incoming' END AS direction
+ORDER BY direction, account;

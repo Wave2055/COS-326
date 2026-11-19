@@ -21,6 +21,110 @@ question in the mark sheet gets shown in order.
 
 ---
 
+## Demo command list (in order)
+
+Every command for the demo, top to bottom. The sections further down explain
+each step and give the expected output.
+
+**Terminal - setup and reset (from the project folder)**
+
+```bash
+cd ~/Documents/COS-326/pracs/prac-4
+systemctl status mongod                     # active (running); else: sudo systemctl start mongod
+mongoimport --db cybershield --collection securityEvents \
+            --jsonArray --drop --file security_events.json     # 32 imported
+mongosh cybershield
+```
+
+**mongosh - Task 1**
+
+```javascript
+// Q1.1
+show dbs
+db.securityEvents.countDocuments()                                   // 32
+db.securityEvents.findOne()
+
+// Q1.2
+insertSecurityEvents("cybershield", "securityEvents", 5)
+db.securityEvents.find({ eventId: { $gte: "EVT10033" } }, { _id: 0 })
+db.securityEvents.countDocuments()                                   // 37
+insertSecurityEvents("cybershield", "securityEvents", 0)             // validation message
+
+// Q1.3
+findEventsByIP("cybershield", "securityEvents", "192.168.10.25")     // 1 event
+findEventsByIP("cybershield", "securityEvents", "1.2.3.4")           // not found
+
+// Q1.4
+updateSeverity("cybershield", "securityEvents", "Brute Force Attack", "Critical")   // 3 (EVT10017 already Critical)
+db.securityEvents.find({ eventType: "Brute Force Attack" }, { _id: 0, eventId: 1, severity: 1 })
+updateSeverity("cybershield", "securityEvents", "Nonexistent Type", "Critical")     // not found
+updateSeverity("cybershield", "securityEvents", "Port Scan", "Urgent")              // invalid severity
+
+// Q1.5
+db.securityEvents.countDocuments({ severity: "Low" })                // note this number
+removeLowSeverityEvents("cybershield", "securityEvents")             // same number removed
+db.securityEvents.countDocuments({ severity: "Low" })                // 0
+
+exit
+```
+
+**Terminal - reset before Task 2**
+
+```bash
+mongoimport --db cybershield --collection securityEvents \
+            --jsonArray --drop --file security_events.json     # 32 imported
+mongosh cybershield
+```
+
+**mongosh - Task 2**
+
+```javascript
+findHighAndCriticalEvents("cybershield", "securityEvents")                      // Q2.1: 19, newest first
+findBruteForceTaggedEvents("cybershield", "securityEvents")                     // Q2.2: 4
+findPendingResponseEvents("cybershield", "securityEvents")                      // Q2.3: 21
+securityEventSummary("cybershield", "securityEvents")                           // Q2.4: High 13, Medium 9, Critical 6, Low 4
+searchEventDescriptions("cybershield", "securityEvents", "authentication")      // Q2.5: 5
+db.securityEvents.getIndexes()                                                  // text index exists
+searchEventDescriptions("cybershield", "securityEvents", "zzzznotathing")       // no match
+
+exit
+```
+
+**Terminal - Task 3**
+
+```bash
+java -jar target/u23621372-Moodally-J.jar          # Q3.1: opens, status bar, 32 events loaded
+```
+
+In the GUI:
+
+1. **Q3.2** - point out the three buttons: Search Events / Update Event / Security Summary.
+2. **Q3.3** - Search Events: `192.168.10.25` -> 1 row; `1.2.3.4` -> not-found dialog; *Show All Events* -> 32.
+3. **Q3.4** - Update Event: `EVT10001` + `Critical` -> success; search `192.168.10.25` again to show Critical;
+   `EVT99999` -> not found; click *Update Severity* again -> already has that severity.
+4. **Q3.5** - Security Summary: click the button -> Critical 7, High 12, Medium 9, Low 4 (after Q3.4).
+
+Optional - prove the summary is live (second terminal, app still open):
+
+```bash
+mongosh cybershield
+```
+
+```javascript
+db.securityEvents.find({ eventId: "EVT10001" }, { _id: 0, eventId: 1, severity: 1 })
+updateSeverity("cybershield", "securityEvents", "Port Scan", "Critical")   // click Security Summary again -> Critical goes up
+```
+
+Q3.1 failure path - close the app first:
+
+```bash
+sudo systemctl stop mongod
+java -jar target/u23621372-Moodally-J.jar          # error dialog, app exits
+sudo systemctl start mongod
+```
+
+---
+
 ## Before the demo
 
 Run these once. Everything after this assumes they are done.
